@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Performance - Campanhas</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
+
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+    <!-- Leaflet MarkerCluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Dashboard de Performance</h1>
+            <p>Análise de Campanhas - Impressões, Investimento e Geolocalização</p>
+        </header>
+
+        <div id="loading" class="loading">Carregando dados...</div>
+        <div id="error" class="error" style="display:none;"></div>
+
+        <div id="content" style="display:none;">
+            <!-- Hero Stats -->
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-value" id="heroCost">R$ 0,00</span>
+                    <span class="hero-label">💰 Investimento Total</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-value" id="heroImpressions">0</span>
+                    <span class="hero-label">👁️ Impressões</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-value" id="heroScreens">0</span>
+                    <span class="hero-label">🖥️ Telas Ativas</span>
+                </div>
+            </div>
+
+            <!-- Métricas Principais -->
+            <div class="metrics-grid">
+                <div class="metric-card cost">
+                    <div class="metric-label">💰 Investimento Total</div>
+                    <div class="metric-value" id="totalCost">R$ 0.00</div>
+                    <div class="metric-subtext">Custo líquido de campanhas</div>
+                </div>
+                <div class="metric-card impressions">
+                    <div class="metric-label">👁️ Impressões Totais</div>
+                    <div class="metric-value" id="totalImpressions">0</div>
+                    <div class="metric-subtext">Visualizações em telas</div>
+                </div>
+                <div class="metric-card plays">
+                    <div class="metric-label">▶️ Total de Plays</div>
+                    <div class="metric-value" id="totalPlays">0</div>
+                    <div class="metric-subtext">Exibições totais</div>
+                </div>
+                <div class="metric-card screens">
+                    <div class="metric-label">🖥️ Telas Ativas</div>
+                    <div class="metric-value" id="totalScreens">0</div>
+                    <div class="metric-subtext">Pontos de exibição únicos</div>
+                </div>
+                <div class="metric-card cities">
+                    <div class="metric-label">🏙️ Cidades</div>
+                    <div class="metric-value" id="totalCities">0</div>
+                    <div class="metric-subtext">Cidades no plano</div>
+                </div>
+                <div class="metric-card countries">
+                    <div class="metric-label">🌍 Países</div>
+                    <div class="metric-value" id="totalCountries">0</div>
+                    <div class="metric-subtext">Países no plano</div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="charts-grid">
+                <!-- Mapa de Localizações -->
+                <div class="map-container full-width">
+                    <h2>🗺️ Mapa de Telas - Geolocalização</h2>
+                    <div id="map"></div>
+                    <div class="geo-stats">
+                        <div class="geo-stat">
+                            <div class="geo-stat-label">Cidades Cobertas</div>
+                            <div class="geo-stat-value" id="mapCities">-</div>
+                        </div>
+                        <div class="geo-stat">
+                            <div class="geo-stat-label">Países Cobertos</div>
+                            <div class="geo-stat-value" id="mapCountries">-</div>
+                        </div>
+                        <div class="geo-stat">
+                            <div class="geo-stat-label">Impressões Médias por Tela</div>
+                            <div class="geo-stat-value" id="avgImpressions">-</div>
+                        </div>
+                        <div class="geo-stat">
+                            <div class="geo-stat-label">Custo Médio por Tela</div>
+                            <div class="geo-stat-value" id="avgCost">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Linha - Performance Diária (Impressões) -->
+                <div class="chart-card full-width">
+                    <h2>📈 Impressões Diárias</h2>
+                    <div class="chart-container">
+                        <canvas id="dailyImpressionsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Linha - Investimento Diário -->
+                <div class="chart-card full-width">
+                    <h2>💸 Investimento Diário</h2>
+                    <div class="chart-container">
+                        <canvas id="dailyCostChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Barras - Performance por Cidade -->
+                <div class="chart-card">
+                    <h2>🏙️ Impressões por Cidade</h2>
+                    <div class="chart-container small">
+                        <canvas id="citiesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Pizza - Distribuição por País -->
+                <div class="chart-card">
+                    <h2>🌍 Impressões por País</h2>
+                    <div class="chart-container small">
+                        <canvas id="countriesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Pizza - Custo por Cidade -->
+                <div class="chart-card">
+                    <h2>💵 Investimento por Cidade</h2>
+                    <div class="chart-container small">
+                        <canvas id="citysCostChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Pizza - Custo por País -->
+                <div class="chart-card">
+                    <h2>💰 Investimento por País</h2>
+                    <div class="chart-container small">
+                        <canvas id="cppChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>📊 Dashboard DisplayCE | Atualizado em: <span id="updateTime"></span></p>
+            <p style="margin-top: 10px; font-size: 0.8em;">
+                Dados em tempo real • Powered by Leaflet & Chart.js
+            </p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

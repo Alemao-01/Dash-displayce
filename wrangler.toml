@@ -1,0 +1,21 @@
+name = "displayce-dashboard"
+main = "worker/index.js"
+compatibility_date = "2024-01-01"
+
+# Configuração do Site Estático (Frontend)
+[site]
+bucket = "./public"
+
+# Configuração do Banco de Dados D1
+[[d1_databases]]
+binding = "DB" # Nome da variável no código do Worker
+database_name = "displayce-db"
+database_id = "SEU_ID_DO_BANCO_AQUI" # Será preenchido após criar no Cloudflare
+
+# Agendamento do Robô (Cron Trigger)
+[triggers]
+crons = ["0 * * * *"] # Roda a cada hora (minuto 0)
+
+# Variáveis de Ambiente (Segredos não vão aqui, via comando)
+[vars]
+API_BASE_URL = "https://datahub.displayce.com/agencies/v2/rtb"

@@ -1,0 +1,54 @@
+[
+  {
+    "campaign_uuid": "4b57a25c-7edc-4026-9661-94802403fd3f",
+    "campaign_id": 17584,
+    "campaign_name": "HubRadios - SECOM - Montevideo",
+    "agency_id": 1087,
+    "advertiser_name": "ESTADO DO RIO GRANDE DO SUL ",
+    "advertiser_id": 5919,
+    "dsp_fee_rate": 0.15,
+    "agency_fee_rate": 0.0,
+    "created_at": "2025-12-12T16:23:44.588Z",
+    "updated_at": "2025-12-12T16:23:44.588Z",
+    "validated": true
+  },
+  {
+    "campaign_uuid": "0c483ffe-90ae-4fd8-a3b3-fbe313f9fdb2",
+    "campaign_id": 17642,
+    "campaign_name": "Bourbon",
+    "agency_id": 1087,
+    "advertiser_name": "Bourbon Carlos Gomes",
+    "advertiser_id": 5932,
+    "dsp_fee_rate": 0.15,
+    "agency_fee_rate": 0.0,
+    "created_at": "2025-12-16T14:48:15.680Z",
+    "updated_at": "2026-01-05T22:43:10.927Z",
+    "validated": false
+  },
+  {
+    "campaign_uuid": "b15f78ed-9dcf-431b-9235-d7516e4b6233",
+    "campaign_id": 17649,
+    "campaign_name": "Floripa",
+    "agency_id": 1087,
+    "advertiser_name": "Unimed",
+    "advertiser_id": 5935,
+    "dsp_fee_rate": 0.15,
+    "agency_fee_rate": 0.0,
+    "created_at": "2025-12-16T22:18:18.338Z",
+    "updated_at": "2025-12-17T14:22:58.001Z",
+    "validated": false
+  },
+  {
+    "campaign_uuid": "491eaa36-4c0e-4b9b-b41c-9552c5e81a0b",
+    "campaign_id": 17665,
+    "campaign_name": "CRZ - Shoppings",
+    "agency_id": 1087,
+    "advertiser_name": "Faculdade Cruzeiro do Sul",
+    "advertiser_id": 5938,
+    "dsp_fee_rate": 0.15,
+    "agency_fee_rate": 0.0,
+    "created_at": "2025-12-17T13:01:27.289Z",
+    "updated_at": "2025-12-17T13:01:27.289Z",
+    "validated": false
+  }
+]
