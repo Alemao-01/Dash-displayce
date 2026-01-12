@@ -1,4 +1,4 @@
-name = "displayce-dashboard"
+name = "pagedash-displayce"
 main = "worker/index.js"
 compatibility_date = "2024-01-01"
 
