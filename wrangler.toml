@@ -10,7 +10,7 @@ bucket = "./public"
 [[d1_databases]]
 binding = "DB" # Nome da variável no código do Worker
 database_name = "displayce-db"
-database_id = "SEU_ID_DO_BANCO_AQUI" # Será preenchido após criar no Cloudflare
+database_id = "b7b497f1-6da9-4607-9957-9e960ef0927b" # Será preenchido após criar no Cloudflare
 
 # Agendamento do Robô (Cron Trigger)
 [triggers]
