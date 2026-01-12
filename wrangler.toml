@@ -2,9 +2,7 @@ name = "displayce-dashboard"
 main = "worker/index.js"
 compatibility_date = "2024-01-01"
 
-# Configuração do Site Estático (Frontend)
-[site]
-bucket = "./public"
+
 
 # Configuração do Banco de Dados D1
 [[d1_databases]]
