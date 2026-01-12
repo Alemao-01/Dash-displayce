@@ -20,22 +20,21 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
 print("""
-╔════════════════════════════════════════════════════════════════╗
-║           📊 Dashboard DisplayCE - Servidor Local             ║
-╚════════════════════════════════════════════════════════════════╝
+================================================================
+           Dashboard DisplayCE - Servidor Local
+================================================================
 
-✅ Servidor iniciado com sucesso!
+Server started successfully!
 
-🌐 Acesse: http://localhost:8000
+Access: http://localhost:8000
 
-📊 Dashboard: http://localhost:8000/index.html
+Dashboard: http://localhost:8000/index.html
 
-⚠️  Para parar o servidor: Pressione Ctrl + C
-
+To stop the server: Press Ctrl + C
 """)
 
 with socketserver.TCPServer(("", PORT), MyHTTPRequestHandler) as httpd:
-    print(f"✨ Aguardando conexões na porta {PORT}...\n")
+    print(f"Waiting for connections on port {PORT}...\n")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

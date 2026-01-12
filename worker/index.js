@@ -171,10 +171,10 @@ async function fetchAndSaveMetrics(env, token, campaignUuid) {
                     cost=excluded.cost
             `).bind(
                 campaignUuid,
-                row["RTBCampaignReports.displayTime"],
-                row["RTBCampaignReports.imps"],
-                row["RTBCampaignReports.plays"],
-                row["RTBCampaignReports.netCost"]
+                row["dt_local"],
+                row["impressions"],
+                row["plays"],
+                row["net_cost"]
             ).run();
         }
     }
@@ -207,9 +207,9 @@ async function fetchAndSaveMetrics(env, token, campaignUuid) {
                     row["point_of_display_address"],
                     row["point_of_display_lat"],
                     row["point_of_display_long"],
-                    row["RTBCampaignReports.imps"],
-                    row["RTBCampaignReports.plays"],
-                    row["RTBCampaignReports.netCost"]
+                    row["impressions"],
+                    row["plays"],
+                    row["net_cost"]
                 ).run();
             }
         }

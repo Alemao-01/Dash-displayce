@@ -67,20 +67,60 @@ async function carregarDados() {
         const user = JSON.parse(localStorage.getItem('user'));
         const campaignUuid = "4b57a25c-7edc-4026-9661-94802403fd3f"; // UUID Exemplo - depois virá dinâmico
 
-        const resp = await fetch(`${API_BASE}/api/dashboard?campaign=${campaignUuid}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        let dadosAPI = { daily: [], screens: [] };
 
-        if (resp.status === 401) {
-            alert("Sessão expirada");
-            localStorage.removeItem('token');
-            window.location.href = 'login.html';
-            return;
+        // MOCK LOCAL: Se estiver local, tentar pegar dos arquivos JSON estáticos
+        if (API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1')) {
+            console.log("Modo Local detectado: Buscando arquivos JSON...");
+            try {
+                const [dailyRes, screensRes] = await Promise.all([
+                    fetch('performance_diaria.json'),
+                    fetch('performance_por_tela.json')
+                ]);
+
+                if (dailyRes.ok) dadosAPI.daily = await dailyRes.json();
+                if (screensRes.ok) dadosAPI.screens = await screensRes.json();
+
+                // Adaptação: Os JSONs locais tem a estrutura crua da API DisplayCE
+                // Precisamos normalizar para o formato esperado pelo front (que espera nomes de colunas do BD)
+                dadosAPI.daily = dadosAPI.daily.map(d => ({
+                    date: d["dt_local"],
+                    impressions: d["impressions"],
+                    plays: d["plays"],
+                    cost: d["net_cost"]
+                }));
+
+                dadosAPI.screens = dadosAPI.screens.map(s => ({
+                    screen_name: s["point_of_display_name"] || s["screen_name"], // Fallback caso mude
+                    city: s["point_of_display_city_name"] || s["city_name"],
+                    country: s["point_of_display_country"] || s["country_name"],
+                    address: s["point_of_display_address"] || "",
+                    lat: s["point_of_display_lat"] || s["lat"],
+                    lng: s["point_of_display_long"] || s["lng"],
+                    impressions: s["impressions"] || s["RTBCampaignReports.imps"],
+                    plays: s["plays"] || s["RTBCampaignReports.plays"],
+                    cost: s["net_cost"] || s["RTBCampaignReports.netCost"]
+                }));
+
+            } catch (e) {
+                console.warn("Não foi possível carregar dados locais:", e);
+                // Segue o fluxo, vai dar erro de "sem dados" lá embaixo se estiver vazio
+            }
+        } else {
+            const resp = await fetch(`${API_BASE}/api/dashboard?campaign=${campaignUuid}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (resp.status === 401) {
+                alert("Sessão expirada");
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!resp.ok) throw new Error(`Erro na API: ${resp.status}`);
+            dadosAPI = await resp.json();
         }
-
-        if (!resp.ok) throw new Error(`Erro na API: ${resp.status}`);
-
-        const dadosAPI = await resp.json();
 
         // Formatar dados para o formato que nossas funções já esperam
         // A API retorna { daily: [], screens: [] } com nomes de colunas do Banco
@@ -288,7 +328,7 @@ function inicializarMapa(dados) {
             <strong>📍 ${localizacao.cidade}, ${localizacao.pais}</strong><br>
             <strong>Endereço:</strong> ${localizacao.address || 'N/A'}<br>
             <strong>Impressões:</strong> ${new Intl.NumberFormat('pt-BR').format(Math.round(localizacao.impressions))}<br>
-            <strong>Custo:</strong> R$ ${localizacao.cost.toFixed(2)}
+            <strong>Custo:</strong> R$ ${(localizacao.cost || 0).toFixed(2)}
         `;
 
         const marcador = L.circleMarker([localizacao.lat, localizacao.lng], {

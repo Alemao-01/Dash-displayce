@@ -5,7 +5,7 @@ import os
 
 # CONFIGURATIONS
 # TODO: Use environment variables or a config file for sensitive data in production
-TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlpWazRMMk9uR0lmT3ZaeWttZTQ4WiJ9.eyJwZ3Jlc3Rfcm9sZSI6InBvc3RncmVzdCIsImh0dHBzOi8vc29sdXRpb24uZGlzcGxheWNlLmNvbS9wdWJsaXNoZXIiOm51bGwsImh0dHBzOi8vc29sdXRpb24uZGlzcGxheWNlLmNvbS91c2VyX3V1aWQiOiI4OGNkNjQ3Yy1jYTg2LTRmYzItYTQ5Zi0zMjk1Zjg5YzY5ZDkiLCJodHRwczovL3NvbHV0aW9uLmRpc3BsYXljZS5jb20vYWdlbmN5X3V1aWQiOiI2YWVhMzk2MC03ZDQwLTRjYTUtODVhZC0xNzY5OGRiYWQ4NDYiLCJodHRwczovL3NvbHV0aW9uLmRpc3BsYXljZS5jb20vaGFzX2FjY2VzcyI6dHJ1ZSwiaHR0cHM6Ly9zb2x1dGlvbi5kaXNwbGF5Y2UuY29tL2FnZW5jeSI6MTA4NywiaHR0cHM6Ly9zb2x1dGlvbi5kaXNwbGF5Y2UuY29tL2FnZW5jeV9uYW1lIjoiQWdlbmNpYSBFLVLDoWRpb3MgLSBCUiIsImh0dHBzOi8vc29sdXRpb24uZGlzcGxheWNlLmNvbS9yb2xlcyI6WyJyb2xlX3RyYWRlcl9ydGIiLCJyb2xlX2FnZW5jeV9hZG1pbiJdLCJuaWNrbmFtZSI6InRhdGljbzEiLCJuYW1lIjoidGF0aWNvMUBodWJyYWRpb3MuY29tIiwicGljdHVyZSI6Imh0dHBzOi8vcy5ncmF2YXRhci5jb20vYXZhdGFyL2ViYjE2ZDY4YjdlZDk0OGJlZDg3NjViOWYwNTNiMDk0P3M9NDgwJnI9cGcmZD1odHRwcyUzQSUyRiUyRmNkbi5hdXRoMC5jb20lMkZhdmF0YXJzJTJGdGEucG5nIiwidXBkYXRlZF9hdCI6IjIwMjYtMDEtMDlUMTk6NDk6NDIuNzEyWiIsImVtYWlsIjoidGF0aWNvMUBodWJyYWRpb3MuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzcyI6Imh0dHBzOi8vZGlzcGxheWNlLmV1LmF1dGgwLmNvbS8iLCJhdWQiOiIxaDd6NnljVG91UDFoZ2JwRnd6czF5YVEyZkw0UmFNMiIsInN1YiI6ImF1dGgwfDY5M2M0N2NmZjdhMjI4ZTBiNzE0Zjc0OSIsImlhdCI6MTc2Nzk4ODE4MywiZXhwIjoxNzY4MDI0MTgzfQ.Afpp-nU88VbYeOmr333nXZOZdi9fUJKjV7hJYufcyPolpt08IGrzXE8LVeKtMjiLLH6nBJQMI7WBS361X8aBcTFswuuYKEVr53RYJXlBJeerKVAaUjB9QzAcefRMvv4dNboRtdqFeGScweYc7pBXus2YZJAjEHB65vMf2_SXnK2ixOJVLq0Fim47uec7jpi8b-dl38f9KEcStXXy0lyxKBz1K9CN3arLzsyLvusX3jm3C7D6t7EAjK8a_ehZZnxFdmbzHQLkV99UUWIZuwXKpOQ5NWSECEPM6MNAPTQDV9n8Qiok0xat3ck7b3ogL4oIJU9-6lvrbpct6Lkv83CF_g"
+TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlpWazRMMk9uR0lmT3ZaeWttZTQ4WiJ9.eyJwZ3Jlc3Rfcm9sZSI6InBvc3RncmVzdCIsImh0dHBzOi8vc29sdXRpb24uZGlzcGxheWNlLmNvbS9wdWJsaXNoZXIiOm51bGwsImh0dHBzOi8vc29sdXRpb24uZGlzcGxheWNlLmNvbS91c2VyX3V1aWQiOiI4OGNkNjQ3Yy1jYTg2LTRmYzItYTQ5Zi0zMjk1Zjg5YzY5ZDkiLCJodHRwczovL3NvbHV0aW9uLmRpc3BsYXljZS5jb20vYWdlbmN5X3V1aWQiOiI2YWVhMzk2MC03ZDQwLTRjYTUtODVhZC0xNzY5OGRiYWQ4NDYiLCJodHRwczovL3NvbHV0aW9uLmRpc3BsYXljZS5jb20vaGFzX2FjY2VzcyI6dHJ1ZSwiaHR0cHM6Ly9zb2x1dGlvbi5kaXNwbGF5Y2UuY29tL2FnZW5jeSI6MTA4NywiaHR0cHM6Ly9zb2x1dGlvbi5kaXNwbGF5Y2UuY29tL2FnZW5jeV9uYW1lIjoiQWdlbmNpYSBFLVLDoWRpb3MgLSBCUiIsImh0dHBzOi8vc29sdXRpb24uZGlzcGxheWNlLmNvbS9yb2xlcyI6WyJyb2xlX3RyYWRlcl9ydGIiLCJyb2xlX2FnZW5jeV9hZG1pbiJdLCJuaWNrbmFtZSI6InRhdGljbzEiLCJuYW1lIjoidGF0aWNvMUBodWJyYWRpb3MuY29tIiwicGljdHVyZSI6Imh0dHBzOi8vcy5ncmF2YXRhci5jb20vYXZhdGFyL2ViYjE2ZDY4YjdlZDk0OGJlZDg3NjViOWYwNTNiMDk0P3M9NDgwJnI9cGcmZD1odHRwcyUzQSUyRiUyRmNkbi5hdXRoMC5jb20lMkZhdmF0YXJzJTJGdGEucG5nIiwidXBkYXRlZF9hdCI6IjIwMjYtMDEtMTJUMTk6NTU6MjAuMTMyWiIsImVtYWlsIjoidGF0aWNvMUBodWJyYWRpb3MuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzcyI6Imh0dHBzOi8vZGlzcGxheWNlLmV1LmF1dGgwLmNvbS8iLCJhdWQiOiIxaDd6NnljVG91UDFoZ2JwRnd6czF5YVEyZkw0UmFNMiIsInN1YiI6ImF1dGgwfDY5M2M0N2NmZjdhMjI4ZTBiNzE0Zjc0OSIsImlhdCI6MTc2ODI0NzcyMCwiZXhwIjoxNzY4MjgzNzIwfQ.VdvcHuqv8si5Hu6pDzokAz4Nq8b9suNIimSeHxcd8PVOEESr-6qVbU4akq_ORQY7Kuv5Fi9ylNYPBi-mSs3uND3B2XWJcmirz5GVfQq7r1Up5BIbl9fX8vjgK79bNNaitw-QFCnc1QvATX8HwSmZwmUIYQp3yxb4jJ890b3lYm5BGAC9UO4T3NNyY7_cSQ8d2JbMLhan1THegdBcnyU6jmxxld_IgVewgYWkw1Wrie_XA8A8HakEKVGRPPa6VOttKuELkSc8A6ZIDZiZHM0jMC8sbW2DHR19JvojP2Ym7Z9vV_jhMwfb_f3QwKtWHm1ecYswXLzhpGLItRRX4BRQwQ"
 API_BASE_URL = "https://datahub.displayce.com/agencies/v2/rtb"
 
 # Ensure output directory exists
@@ -24,16 +24,16 @@ def get_headers():
 def list_campaigns():
     """Fetches and lists all campaigns."""
     url = f"{API_BASE_URL}/campaigns"
-    print(f"🔍 Fetching campaigns from: {url}")
+    print(f"Fetching campaigns from: {url}")
     
     response = requests.get(url, headers=get_headers())
     
     if response.status_code == 200:
         campaigns = response.json()
-        print(f"✅ Found {len(campaigns)} campaigns.")
+        print(f"Found {len(campaigns)} campaigns.")
         return campaigns
     else:
-        print(f"❌ Error fetching campaigns: {response.status_code} - {response.text}")
+        print(f"Error fetching campaigns: {response.status_code} - {response.text}")
         return []
 
 
@@ -42,28 +42,28 @@ def save_json(filename, data):
     filepath = os.path.join(PUBLIC_DIR, filename)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"💾 Saved {filename} to {filepath}")
+    print(f"Saved {filename} to {filepath}")
 
 
 def fetch_report(campaign_uuid, params, report_type):
     """Generic function to fetch report data."""
     url = f"{API_BASE_URL}/reports/delivery/{campaign_uuid}"
-    print(f"🔍 Fetching {report_type} report for {campaign_uuid}...")
+    print(f"Fetching {report_type} report for {campaign_uuid}...")
     
     response = requests.get(url, headers=get_headers(), params=params)
     
     if response.status_code == 200:
         data = response.json()
-        print(f"✅ Loaded {len(data)} records for {report_type}.")
+        print(f"Loaded {len(data)} records for {report_type}.")
         return data
     else:
-        print(f"❌ Error fetching {report_type}: {response.status_code} - {response.text}")
+        print(f"Error fetching {report_type}: {response.status_code} - {response.text}")
         return []
 
 
 def update_dashboard_data(campaign_uuid):
     """Updates all necessary data for the dashboard for a specific campaign."""
-    print(f"\n🔄 Updating dashboard for campaign: {campaign_uuid}")
+    print(f"\nUpdating dashboard for campaign: {campaign_uuid}")
     
     # 1. Daily Performance
     end_date = datetime.now()
@@ -90,7 +90,7 @@ def update_dashboard_data(campaign_uuid):
 
 
 def main():
-    print("🚀 DisplayCE Manager Started")
+    print("DisplayCE Manager Started")
     
     # 1. List Campaigns
     campaigns = list_campaigns()
@@ -105,22 +105,22 @@ def main():
         
         target_uuid = None
         if active_campaigns:
-            print(f"\n🔥 Found {len(active_campaigns)} active campaigns.")
+            print(f"\nFound {len(active_campaigns)} active campaigns.")
             target_campaign = active_campaigns[0] # Pick the first active one
             target_uuid = target_campaign.get('uuid')
-            print(f"👉 Selecting: {target_campaign.get('name')} ({target_uuid})")
+            print(f"Selecting: {target_campaign.get('name')} ({target_uuid})")
         elif campaigns:
-             print("\n⚠️ No active campaigns found. Using the first available campaign.")
+             print("\nNo active campaigns found. Using the first available campaign.")
              target_uuid = campaigns[0].get('uuid')
         
         # 3. Fetch Data if we have a target
         if target_uuid:
             update_dashboard_data(target_uuid)
         else:
-            print("❌ No campaign UUID available to fetch data.")
+            print("No campaign UUID available to fetch data.")
             
     else:
-        print("❌ No campaigns found. Check your token or connection.")
+        print("No campaigns found. Check your token or connection.")
 
 if __name__ == "__main__":
     main()
