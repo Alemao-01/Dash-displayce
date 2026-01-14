@@ -132,8 +132,8 @@ async function carregarDados() {
 
         // Verificar se tem dados
         if (dadosDiarios.length === 0 && dadosTelas.length === 0) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
             return;
         }
 
@@ -141,9 +141,9 @@ async function carregarDados() {
         const dadosProcessados = processarDados(dadosDiarios, dadosTelas);
 
         // Esconder carregamento e mostrar conteúdo
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('emptyState').style.display = 'none';
-        document.getElementById('content').style.display = 'block';
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('content').classList.remove('hidden');
 
         // Atualizar as métricas
         atualizarMetricas(dadosProcessados);
@@ -160,10 +160,10 @@ async function carregarDados() {
     } catch (error) {
         console.error('Erro:', error);
 
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
         const errorEl = document.getElementById('error');
-        errorEl.style.display = 'block';
+        errorEl.classList.remove('hidden');
 
         // Mostrar erro amigável pro usuário
         errorEl.innerHTML = `<strong>❌ Erro ao carregar dados</strong><br>${error.message}`;
@@ -614,9 +614,9 @@ function switchInvestmentView(view, btn) {
 // Event Listeners
 document.getElementById('campaignSelect').addEventListener('change', (e) => {
     localStorage.setItem('selectedCampaignUuid', e.target.value);
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('content').style.display = 'none';
-    document.getElementById('error').style.display = 'none';
+    document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('content').classList.add('hidden');
+    document.getElementById('error').classList.add('hidden');
     carregarDados();
 });
 
@@ -650,6 +650,25 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     localStorage.removeItem('user');
     localStorage.removeItem('selectedCampaignUuid');
     window.location.href = 'login.html';
+});
+
+// Event delegation para toggles de gráficos
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('toggle-btn')) {
+        const chartType = e.target.dataset.chart;
+        const view = e.target.dataset.view;
+
+        if (chartType === 'impressions') {
+            switchImpressionsView(view, e.target);
+        } else if (chartType === 'investment') {
+            switchInvestmentView(view, e.target);
+        }
+    }
+
+    // Evento para o botão de refresh no empty state
+    if (e.target.dataset.action === 'refresh') {
+        document.getElementById('refreshBtn').click();
+    }
 });
 
 window.addEventListener('load', carregarDados);

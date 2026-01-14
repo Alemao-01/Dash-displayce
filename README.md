@@ -1,67 +1,69 @@
-# 🚀 DisplayCE Dashboard - SaaS (Cloudflare Version)
+# 🚀 DisplayCE Dashboard - SaaS (Cloudflare)
 
-Este projeto é uma plataforma SaaS para monitoramento de campanhas DisplayCE em tempo real.
-A arquitetura é **100% Serverless** rodando na **Cloudflare**, eliminando a necessidade de servidores locais ligados.
+Dashboard em tempo real para monitoramento de campanhas DisplayCE. Arquitetura 100% Serverless na Cloudflare.
+
+## 📚 Documentação
+
+Toda a documentação do projeto está organizada na pasta [`docs/`](./docs/):
+
+- **[README.md](./docs/README.md)** - Arquitetura e deploy completo
+- **[DISPLAYCE_API_GUIDE.md](./docs/DISPLAYCE_API_GUIDE.md)** - Integração com API DisplayCE
+- **[RECOVERY_GUIDE.md](./docs/RECOVERY_GUIDE.md)** - Manutenção e rollback
+- **[DOMINIO_E_FLUXO_DEV.md](./docs/DOMINIO_E_FLUXO_DEV.md)** - Domínio personalizado e fluxo de trabalho
+
+## ⚡ Workflows (Comandos Rápidos)
+
+Use os workflows na pasta [`.agent/workflows/`](./.agent/workflows/):
+
+- `/setup-inicial` - Configuração inicial do projeto
+- `/deploy` - Fazer deploy para produção
+- `/rollback` - Voltar para versão anterior
+- `/debug` - Debugar problemas
+- `/update-secrets` - Atualizar credenciais
 
 ## 🏗️ Arquitetura
 
-- **Frontend (`/public`)**: Site estático (Cloudflare Pages)
-- **Backend (`/worker`)**: Robô e API (Cloudflare Workers, portado de Python para JS/TS para performance)
-- **Database (`/schemas`)**: Banco SQL (Cloudflare D1)
-
-## 🛠️ Como colocar no ar (Deploy)
-
-### Pré-requisitos
-1. Ter Node.js instalado.
-2. Ter uma conta na Cloudflare.
-3. Instalar a CLI do Wrangler:
-   ```bash
-   npm install -g wrangler
-   ```
-
-### Passo 1: Login
-No terminal (dentro desta pasta), rode:
-```bash
-wrangler login
+```
+Frontend (Cloudflare Pages)
+     ↓
+Worker (Cloudflare Workers)
+     ↓
+D1 Database (Cloudflare D1)
+     ↓
+DisplayCE API
 ```
 
-### Passo 2: Criar Banco de Dados
-```bash
-wrangler d1 create displayce-db
-```
-*Copie o `database_id` gerado e cole no arquivo `wrangler.toml` no lugar de `SEU_ID_DO_BANCO_AQUI`.*
+## 🚀 Quick Start
 
-### Passo 3: Criar Tabelas
 ```bash
-wrangler d1 execute displayce-db --file=./schemas/schema.sql
-```
+# 1. Login na Cloudflare
+npx wrangler login
 
-### Passo 4: Configurar Segredos (Credenciais DisplayCE)
-```bash
-wrangler secret put DISPLAYCE_USER
-# (Digite seu email da DisplayCE quando pedir)
+# 2. Deploy
+npx wrangler deploy
 
-wrangler secret put DISPLAYCE_PASSWORD
-# (Digite sua senha da DisplayCE quando pedir)
+# 3. Ver logs
+npx wrangler tail
 ```
 
-### Passo 5: Publicar (Deploy Tudo)
-```bash
-wrangler deploy
+## 📦 Estrutura do Projeto
+
+```
+Api displayce/
+├── .agent/workflows/    # Workflows de automação
+├── docs/                # Documentação completa
+├── public/              # Frontend (HTML, CSS, JS)
+├── src/                 # Backend Worker
+├── schemas/             # Schemas do banco D1
+└── wrangler.toml        # Configuração Cloudflare
 ```
 
-O terminal vai te dar o link do site funcionando! 🎉
+## 🔗 Links Úteis
 
-### Passo 6: Criar um Usuário Inicial
-Para testar o login, crie um usuário manualmente no banco:
-```bash
-wrangler d1 execute displayce-db --command "INSERT INTO users (email, password_hash, name, role) VALUES ('admin@displayce.com', 'admin123', 'Administrador', 'admin')"
-```
-*(Nota: em produção, a senha deve ser hash, mas para teste rápido isso funciona se o código do worker aceitar texto puro ou se você criptografar antes)*
+- **Dashboard Cloudflare:** https://dash.cloudflare.com/
+- **Documentação Wrangler:** https://developers.cloudflare.com/workers/wrangler/
+- **DisplayCE API:** https://datahub.displayce.com/
 
-## 🔄 Como funciona a automação
-O Cloudflare Worker está configurado (no `wrangler.toml`) para rodar a cada hora (`0 * * * *`). Ele automaticamente:
-1. Faz login na DisplayCE.
-2. Baixa dados novos.
-3. Atualiza o banco de dados.
-4. Seu painel mostra sempre dados frescos!
+---
+
+**Desenvolvido para E-Mídias** | Powered by Cloudflare ☁️

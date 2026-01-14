@@ -52,17 +52,16 @@
         <div id="loading" class="loading">Carregando dados...</div>
 
         <!-- Empty State -->
-        <div id="emptyState" class="empty-state" style="display:none;">
+        <div id="emptyState" class="empty-state hidden">
             <div class="empty-icon">📊</div>
             <h2>Nenhum dado disponível</h2>
             <p>Esta campanha ainda não possui dados de performance.</p>
-            <button onclick="document.getElementById('refreshBtn').click()" class="btn-refresh-empty">🔄 Sincronizar
-                Dados</button>
+            <button class="btn-refresh-empty" data-action="refresh">🔄 Sincronizar Dados</button>
         </div>
 
-        <div id="error" class="error" style="display:none;"></div>
+        <div id="error" class="error hidden"></div>
 
-        <div id="content" style="display:none;">
+        <div id="content" class="hidden">
             <!-- HERO STATS - NOVO LAYOUT -->
             <div class="hero-stats">
                 <h2 class="hero-title">Dashboard de Performance - Campanha Atual</h2>
@@ -171,10 +170,9 @@
                     <div class="chart-header">
                         <h2>📊 Impressões Geográficas</h2>
                         <div class="chart-toggles">
-                            <button class="toggle-btn active" onclick="switchImpressionsView('city', this)">Por
+                            <button class="toggle-btn active" data-chart="impressions" data-view="city">Por
                                 Cidade</button>
-                            <button class="toggle-btn" onclick="switchImpressionsView('country', this)">Por
-                                País</button>
+                            <button class="toggle-btn" data-chart="impressions" data-view="country">Por País</button>
                         </div>
                     </div>
                     <div class="chart-container small">
@@ -187,9 +185,9 @@
                     <div class="chart-header">
                         <h2>💰 Investimento Geográfico</h2>
                         <div class="chart-toggles">
-                            <button class="toggle-btn active" onclick="switchInvestmentView('city', this)">Por
+                            <button class="toggle-btn active" data-chart="investment" data-view="city">Por
                                 Cidade</button>
-                            <button class="toggle-btn" onclick="switchInvestmentView('country', this)">Por País</button>
+                            <button class="toggle-btn" data-chart="investment" data-view="country">Por País</button>
                         </div>
                     </div>
                     <div class="chart-container small">
@@ -204,7 +202,7 @@
                 <img src="assets/logo-horizontal.png" alt="E-Mídias" class="footer-logo">
             </div>
             <p>Dashboard E-Mídias • Tecnologia em publicidade</p>
-            <p style="margin-top: 10px; font-size: 0.8em;">Atualizado em: <span id="updateTime"></span></p>
+            <p class="update-time-text">Atualizado em: <span id="updateTime"></span></p>
         </footer>
     </div>
 
