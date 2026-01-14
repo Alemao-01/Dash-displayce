@@ -118,7 +118,8 @@
     </div>
 
     <script>
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://127.0.0.1:8787' : '';
+        // URL da API - Caminho relativo para funcionar em qualquer domínio
+        const API_BASE = '';
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -132,22 +133,6 @@
             errorMsg.style.display = 'none';
 
             try {
-                // MOCK LOGIN LOCAL
-                if (API_BASE.includes('127.0.0.1') || API_BASE.includes('localhost')) {
-                    if (email === 'login@gmail.com' && password === '123') {
-                        // Simular atraso de rede
-                        await new Promise(r => setTimeout(r, 500));
-                        const mockData = {
-                            token: 'mock-token-local',
-                            user: { name: 'Usuário Local', id: 1 }
-                        };
-                        localStorage.setItem('token', mockData.token);
-                        localStorage.setItem('user', JSON.stringify(mockData.user));
-                        window.location.href = 'index.html';
-                        return; // Para aqui e não chama o fetch
-                    }
-                }
-
                 const response = await fetch(`${API_BASE}/api/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

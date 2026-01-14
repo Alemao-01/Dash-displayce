@@ -27,29 +27,74 @@
 </head>
 
 <body>
+    <!-- NAVBAR E-MÍDIAS -->
+    <nav class="navbar">
+        <img src="assets/logo-horizontal.png" alt="E-Mídias" class="navbar-logo">
+    </nav>
+
     <div class="container">
         <header>
-            <h1>📊 Dashboard de Performance</h1>
+            <div class="header-top">
+                <h1>📊 Dashboard de Performance</h1>
+                <button id="logoutBtn" class="btn-logout">Sair</button>
+            </div>
             <p>Análise de Campanhas - Impressões, Investimento e Geolocalização</p>
+
+            <div class="campaign-selector-container">
+                <label for="campaignSelect">Campanha:</label>
+                <select id="campaignSelect">
+                    <option value="">Carregando campanhas...</option>
+                </select>
+                <button id="refreshBtn" class="btn-refresh" title="Atualizar dados">🔄</button>
+            </div>
         </header>
 
         <div id="loading" class="loading">Carregando dados...</div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="empty-icon">📊</div>
+            <h2>Nenhum dado disponível</h2>
+            <p>Esta campanha ainda não possui dados de performance.</p>
+            <button onclick="document.getElementById('refreshBtn').click()" class="btn-refresh-empty">🔄 Sincronizar
+                Dados</button>
+        </div>
+
         <div id="error" class="error" style="display:none;"></div>
 
         <div id="content" style="display:none;">
-            <!-- Hero Stats -->
+            <!-- HERO STATS - NOVO LAYOUT -->
             <div class="hero-stats">
-                <div class="hero-stat">
-                    <span class="hero-value" id="heroCost">R$ 0,00</span>
-                    <span class="hero-label">💰 Investimento Total</span>
-                </div>
-                <div class="hero-stat">
-                    <span class="hero-value" id="heroImpressions">0</span>
-                    <span class="hero-label">👁️ Impressões</span>
-                </div>
-                <div class="hero-stat">
-                    <span class="hero-value" id="heroScreens">0</span>
-                    <span class="hero-label">🖥️ Telas Ativas</span>
+                <h2 class="hero-title">Dashboard de Performance - Campanha Atual</h2>
+                <div class="hero-metrics">
+                    <div class="hero-stat">
+                        <div class="hero-icon">💰</div>
+                        <div class="hero-info">
+                            <span class="hero-value" id="heroCost">R$ 0,00</span>
+                            <span class="hero-label">Investimento Total</span>
+                        </div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-icon">📊</div>
+                        <div class="hero-info">
+                            <span class="hero-value" id="heroImpressions">0</span>
+                            <span class="hero-label">Impressões Totais</span>
+                        </div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-icon">📺</div>
+                        <div class="hero-info">
+                            <span class="hero-value" id="heroScreens">0</span>
+                            <span class="hero-label">Telas Ativas</span>
+                        </div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-icon">▶️</div>
+                        <div class="hero-info">
+                            <span class="hero-value" id="heroPlays">0</span>
+                            <span class="hero-label">Total de Exibições</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -113,61 +158,53 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Linha - Performance Diária (Impressões) -->
+                <!-- Gráfico Unificado - Impressões e Investimento -->
                 <div class="chart-card full-width">
-                    <h2>📈 Impressões Diárias</h2>
+                    <h2>📈 Performance Diária - Impressões e Investimento</h2>
                     <div class="chart-container">
-                        <canvas id="dailyImpressionsChart"></canvas>
+                        <canvas id="dailyUnifiedChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Gráfico de Linha - Investimento Diário -->
-                <div class="chart-card full-width">
-                    <h2>💸 Investimento Diário</h2>
-                    <div class="chart-container">
-                        <canvas id="dailyCostChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Gráfico de Barras - Performance por Cidade -->
+                <!-- Gráfico Impressões por Cidade/País -->
                 <div class="chart-card">
-                    <h2>🏙️ Impressões por Cidade</h2>
+                    <div class="chart-header">
+                        <h2>📊 Impressões Geográficas</h2>
+                        <div class="chart-toggles">
+                            <button class="toggle-btn active" onclick="switchImpressionsView('city', this)">Por
+                                Cidade</button>
+                            <button class="toggle-btn" onclick="switchImpressionsView('country', this)">Por
+                                País</button>
+                        </div>
+                    </div>
                     <div class="chart-container small">
-                        <canvas id="citiesChart"></canvas>
+                        <canvas id="impressionsGeoChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Gráfico de Pizza - Distribuição por País -->
+                <!-- Gráfico Investimento por Cidade/País -->
                 <div class="chart-card">
-                    <h2>🌍 Impressões por País</h2>
-                    <div class="chart-container small">
-                        <canvas id="countriesChart"></canvas>
+                    <div class="chart-header">
+                        <h2>💰 Investimento Geográfico</h2>
+                        <div class="chart-toggles">
+                            <button class="toggle-btn active" onclick="switchInvestmentView('city', this)">Por
+                                Cidade</button>
+                            <button class="toggle-btn" onclick="switchInvestmentView('country', this)">Por País</button>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Gráfico de Pizza - Custo por Cidade -->
-                <div class="chart-card">
-                    <h2>💵 Investimento por Cidade</h2>
                     <div class="chart-container small">
-                        <canvas id="citysCostChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Gráfico de Pizza - Custo por País -->
-                <div class="chart-card">
-                    <h2>💰 Investimento por País</h2>
-                    <div class="chart-container small">
-                        <canvas id="cppChart"></canvas>
+                        <canvas id="investmentGeoChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
         <footer>
-            <p>📊 Dashboard DisplayCE | Atualizado em: <span id="updateTime"></span></p>
-            <p style="margin-top: 10px; font-size: 0.8em;">
-                Dados em tempo real • Powered by Leaflet & Chart.js
-            </p>
+            <div class="footer-brand">
+                <img src="assets/logo-horizontal.png" alt="E-Mídias" class="footer-logo">
+            </div>
+            <p>Dashboard E-Mídias • Tecnologia em publicidade</p>
+            <p style="margin-top: 10px; font-size: 0.8em;">Atualizado em: <span id="updateTime"></span></p>
         </footer>
     </div>
 

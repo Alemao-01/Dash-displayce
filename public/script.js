@@ -1,22 +1,25 @@
-// Cores para os gráficos
-const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-    '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#A9DFBF',
-    '#F1948A', '#5DADE2', '#F5B041', '#52BE80', '#F9E79F'
-];
+// Cores E-Mídias
+const brandColors = ['#e91e8c', '#7b2cbf', '#1a1a4e', '#4facfe', '#43e97b', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
 
 // Gerenciamento de instâncias de gráficos para evitar memory leaks
 const graficos = {
-    dailyImpressions: null,
-    dailyCost: null,
-    cities: null,
-    countries: null,
-    citysCost: null,
-    cpp: null
+    dailyUnified: null,
+    impressionsGeo: null,
+    investmentGeo: null
 };
 
-// URL da API (Automática dependendo se é localhost ou produção)
-const API_BASE = window.location.hostname === 'localhost' ? 'http://127.0.0.1:8787' : '';
+// Dados para os gráficos geográficos
+let geoDataState = {
+    impressionsView: 'city',
+    investmentView: 'city',
+    metricas: null
+};
+
+// Instância global do mapa para evitar memory leak
+let mapaGlobal = null;
+
+// URL da API (Backend Worker) - Caminho relativo para funcionar em qualquer domínio
+const API_BASE = '';
 
 // Mapa de tradução de países
 const paisesTraducao = {
@@ -62,71 +65,52 @@ async function carregarDados() {
         const token = await verificarAuth();
         if (!token) return;
 
-        // Pegar ID da Campanha (poderia vir da URL ?campaign=UUID ou do usuário)
-        // Por enquanto, vamos pegar a primeira disponível ou hardcoded para teste
-        const user = JSON.parse(localStorage.getItem('user'));
-        const campaignUuid = "4b57a25c-7edc-4026-9661-94802403fd3f"; // UUID Exemplo - depois virá dinâmico
+        // 1. Carregar lista de campanhas se ainda não tiver
+        const campaignSelect = document.getElementById('campaignSelect');
+        const currentCampaignUuid = localStorage.getItem('selectedCampaignUuid');
 
-        let dadosAPI = { daily: [], screens: [] };
-
-        // MOCK LOCAL: Se estiver local, tentar pegar dos arquivos JSON estáticos
-        if (API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1')) {
-            console.log("Modo Local detectado: Buscando arquivos JSON...");
+        if (campaignSelect.options.length <= 1) { // Só carrega se estiver vazio/padrão
             try {
-                const [dailyRes, screensRes] = await Promise.all([
-                    fetch('performance_diaria.json'),
-                    fetch('performance_por_tela.json')
-                ]);
+                const respCamps = await fetch(`${API_BASE}/api/campaigns`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (respCamps.ok) {
+                    const campaigns = await respCamps.json();
+                    campaignSelect.innerHTML = campaigns.map(c =>
+                        `<option value="${c.uuid}" ${c.uuid === currentCampaignUuid ? 'selected' : ''}>${c.name} (${c.advertiser_name})</option>`
+                    ).join('');
 
-                if (dailyRes.ok) dadosAPI.daily = await dailyRes.json();
-                if (screensRes.ok) dadosAPI.screens = await screensRes.json();
-
-                // Adaptação: Os JSONs locais tem a estrutura crua da API DisplayCE
-                // Precisamos normalizar para o formato esperado pelo front (que espera nomes de colunas do BD)
-                dadosAPI.daily = dadosAPI.daily.map(d => ({
-                    date: d["dt_local"],
-                    impressions: d["impressions"],
-                    plays: d["plays"],
-                    cost: d["net_cost"]
-                }));
-
-                dadosAPI.screens = dadosAPI.screens.map(s => ({
-                    screen_name: s["point_of_display_name"] || s["screen_name"], // Fallback caso mude
-                    city: s["point_of_display_city_name"] || s["city_name"],
-                    country: s["point_of_display_country"] || s["country_name"],
-                    address: s["point_of_display_address"] || "",
-                    lat: s["point_of_display_lat"] || s["lat"],
-                    lng: s["point_of_display_long"] || s["lng"],
-                    impressions: s["impressions"] || s["RTBCampaignReports.imps"],
-                    plays: s["plays"] || s["RTBCampaignReports.plays"],
-                    cost: s["net_cost"] || s["RTBCampaignReports.netCost"]
-                }));
-
+                    if (campaigns.length > 0 && !currentCampaignUuid) {
+                        localStorage.setItem('selectedCampaignUuid', campaigns[0].uuid);
+                    }
+                }
             } catch (e) {
-                console.warn("Não foi possível carregar dados locais:", e);
-                // Segue o fluxo, vai dar erro de "sem dados" lá embaixo se estiver vazio
+                console.warn("Erro ao carregar lista de campanhas:", e);
+                campaignSelect.innerHTML = '<option value="">Erro ao carregar campanhas</option>';
             }
-        } else {
-            const resp = await fetch(`${API_BASE}/api/dashboard?campaign=${campaignUuid}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (resp.status === 401) {
-                alert("Sessão expirada");
-                localStorage.removeItem('token');
-                window.location.href = 'login.html';
-                return;
-            }
-
-            if (!resp.ok) throw new Error(`Erro na API: ${resp.status}`);
-            dadosAPI = await resp.json();
         }
 
-        // Formatar dados para o formato que nossas funções já esperam
-        // A API retorna { daily: [], screens: [] } com nomes de colunas do Banco
-        // Precisamos adaptar para os objetos que o processarDados espera ou ajustar o processarDados
+        const campaignUuid = localStorage.getItem('selectedCampaignUuid');
+        if (!campaignUuid) {
+            throw new Error('Nenhuma campanha disponível. Tente rodar a atualização manual.');
+        }
 
-        // VAMOS ADAPTAR AQUI MESMO PARA MANTER INTEGRIDADE
+        // Buscar dados da API
+        const resp = await fetch(`${API_BASE}/api/dashboard?campaign=${campaignUuid}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (resp.status === 401) {
+            alert("Sessão expirada");
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        if (!resp.ok) throw new Error(`Erro na API: ${resp.status}`);
+        const dadosAPI = await resp.json();
+
+        // Adaptar dados...
         const dadosDiarios = dadosAPI.daily.map(d => ({
             dt_local: d.date,
             impressions: d.impressions,
@@ -146,8 +130,11 @@ async function carregarDados() {
             net_cost: s.cost
         }));
 
+        // Verificar se tem dados
         if (dadosDiarios.length === 0 && dadosTelas.length === 0) {
-            throw new Error('Nenhum dado encontrado para esta campanha.');
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            return;
         }
 
         // Processar dados
@@ -155,6 +142,7 @@ async function carregarDados() {
 
         // Esconder carregamento e mostrar conteúdo
         document.getElementById('loading').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'none';
         document.getElementById('content').style.display = 'block';
 
         // Atualizar as métricas
@@ -173,6 +161,7 @@ async function carregarDados() {
         console.error('Erro:', error);
 
         document.getElementById('loading').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'none';
         const errorEl = document.getElementById('error');
         errorEl.style.display = 'block';
 
@@ -237,20 +226,35 @@ function processarDados(dadosDiarios, dadosTelas) {
     metricas.avgImpressionsPerScreen = metricas.totalImpressions / screenCount;
     metricas.avgCostPerScreen = metricas.totalCost / screenCount;
 
-    // Processar dados por dia
+    // Processar dados por dia com validação defensiva
     dadosDiarios.forEach(item => {
-        const data = new Date(item.dt_local);
-        const dataFormatada = data.toLocaleDateString('pt-BR');
-
-        if (!metricas.metricasDiarias[dataFormatada]) {
-            metricas.metricasDiarias[dataFormatada] = {
-                impressions: 0,
-                cost: 0,
-                timestamp: data.getTime()
-            };
+        // Validação defensiva de data
+        if (!item.dt_local || typeof item.dt_local !== 'string') {
+            console.warn('Data inválida ignorada:', item);
+            return;
         }
-        metricas.metricasDiarias[dataFormatada].impressions += item.impressions || 0;
-        metricas.metricasDiarias[dataFormatada].cost += item.net_cost || 0;
+
+        try {
+            const parts = item.dt_local.split('T')[0].split('-');
+            if (parts.length !== 3) return; // Skip formato inválido
+
+            const data = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+            if (isNaN(data.getTime())) return; // Skip data inválida
+
+            const dataFormatada = data.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+
+            if (!metricas.metricasDiarias[dataFormatada]) {
+                metricas.metricasDiarias[dataFormatada] = {
+                    impressions: 0,
+                    cost: 0,
+                    timestamp: data.getTime()
+                };
+            }
+            metricas.metricasDiarias[dataFormatada].impressions += item.impressions || 0;
+            metricas.metricasDiarias[dataFormatada].cost += item.net_cost || 0;
+        } catch (e) {
+            console.warn('Erro ao processar data:', item.dt_local, e);
+        }
     });
 
     metricas.totalCidades = Object.keys(metricas.cidades).length;
@@ -286,32 +290,31 @@ function atualizarMetricas(dados) {
     document.getElementById('heroImpressions').textContent =
         new Intl.NumberFormat('pt-BR').format(Math.round(dados.totalImpressions));
     document.getElementById('heroScreens').textContent = dados.totalScreens.size;
+    document.getElementById('heroPlays').textContent =
+        new Intl.NumberFormat('pt-BR').format(dados.totalPlays);
 }
 
 function inicializarMapa(dados) {
     const latCentral = dados.geoLocations.length > 0 ? dados.geoLocations[0].lat : 0;
     const lngCentral = dados.geoLocations.length > 0 ? dados.geoLocations[0].lng : 0;
 
-    // Se já existe mapa, remover (embora a variável global tenha sido removida, 
-    // na prática o container é limpo ou recriado, aqui assumimos novo load limpo)
-    // Mas para garantir, checamos se o container tem filhos e limpamos se necessário ou usamos remove() se tivéssemos ref
-    // Como removemos a global 'mapa', vamos assumir que a função cria um novo escopado.
-
-    // Melhor approach: verificar se o elemento 'map' já tem intância leaflet associada?
-    // Leaflet não anexa fácil ao DOM element.
-    // Vamos apenas recriar assumindo refresh de página ou limpar container:
-    const mapContainer = document.getElementById('map');
-    if (mapContainer._leaflet_id) {
-        mapContainer._leaflet_id = null; // Hack simples pra resetar se necessário, mas idealmente usar remove()
-        mapContainer.innerHTML = '';
+    // Destruir mapa anterior corretamente para evitar memory leak
+    if (mapaGlobal) {
+        mapaGlobal.remove();
+        mapaGlobal = null;
     }
 
-    const mapa = L.map('map').setView([latCentral, lngCentral], 4);
+    // Limpar container
+    const mapContainer = document.getElementById('map');
+    mapContainer.innerHTML = '';
+
+    // Criar novo mapa
+    mapaGlobal = L.map('map').setView([latCentral, lngCentral], 4);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19
-    }).addTo(mapa);
+    }).addTo(mapaGlobal);
 
     // Criar grupo de cluster
     const markers = L.markerClusterGroup({
@@ -332,32 +335,35 @@ function inicializarMapa(dados) {
         `;
 
         const marcador = L.circleMarker([localizacao.lat, localizacao.lng], {
-            radius: tamanhoMarcador + 2, // Aumentar um pouco o raio
-            fillColor: '#FF0055', // Cor vibrante (rosa choque/vermelho) para destaque
+            radius: tamanhoMarcador + 2,
+            fillColor: '#e91e8c', // Magenta E-Mídias
             color: '#FFFFFF', // Borda branca para contraste
             weight: 2,
             opacity: 1,
-            fillOpacity: 0.9 // Mais opaco para visibilidade
+            fillOpacity: 0.9
         }).bindPopup(textoPopup);
 
         markers.addLayer(marcador);
     });
 
-    mapa.addLayer(markers);
+    mapaGlobal.addLayer(markers);
 
     // Ajustar zoom e posição do mapa
     if (dados.geoLocations.length > 0) {
         const limites = L.latLngBounds(
             dados.geoLocations.map(loc => [loc.lat, loc.lng])
         );
-        mapa.fitBounds(limites, { padding: [50, 50] });
+        mapaGlobal.fitBounds(limites, { padding: [50, 50] });
     }
 
-    return mapa; // Retorna instância caso precise usar externamente
+    return mapaGlobal;
 }
 
 function criarGraficos(metricas, dadosDiarios, dadosTelas) {
     try {
+        // Salvar métricas globalmente para os toggles
+        geoDataState.metricas = metricas;
+
         // Destruir gráficos existentes antes de criar novos para evitar Memory Leaks
         Object.keys(graficos).forEach(key => {
             if (graficos[key]) {
@@ -371,171 +377,279 @@ function criarGraficos(metricas, dadosDiarios, dadosTelas) {
             .sort((a, b) => metricas.metricasDiarias[a].timestamp - metricas.metricasDiarias[b].timestamp);
 
         const impressoesDiarias = datasOrdenadas.map(d => metricas.metricasDiarias[d].impressions);
-
-        graficos.dailyImpressions = new Chart(document.getElementById('dailyImpressionsChart'), {
-            type: 'line',
-            data: {
-                labels: datasOrdenadas,
-                datasets: [{
-                    label: 'Impressões',
-                    data: impressoesDiarias,
-                    borderColor: '#4ECDC4',
-                    backgroundColor: 'rgba(78, 205, 196, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#4ECDC4'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' } },
-                scales: {
-                    x: {
-                        ticks: { maxRotation: 45, minRotation: 0 }
-                    }
-                }
-            }
-        });
-
         const custosDiarios = datasOrdenadas.map(d => metricas.metricasDiarias[d].cost);
 
-        graficos.dailyCost = new Chart(document.getElementById('dailyCostChart'), {
+        // Gráfico Unificado com dois eixos Y
+        graficos.dailyUnified = new Chart(document.getElementById('dailyUnifiedChart'), {
             type: 'line',
             data: {
                 labels: datasOrdenadas,
-                datasets: [{
-                    label: 'Investimento (R$)',
-                    data: custosDiarios,
-                    borderColor: '#FF6B6B',
-                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#FF6B6B'
-                }]
+                datasets: [
+                    {
+                        label: 'Impressões',
+                        data: impressoesDiarias,
+                        borderColor: '#e91e8c',
+                        backgroundColor: 'rgba(233, 30, 140, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#e91e8c',
+                        yAxisID: 'yImpressions'
+                    },
+                    {
+                        label: 'Investimento (R$)',
+                        data: custosDiarios,
+                        borderColor: '#7b2cbf',
+                        backgroundColor: 'rgba(123, 44, 191, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#7b2cbf',
+                        yAxisID: 'yInvestment'
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' } },
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        onClick: function (e, legendItem, legend) {
+                            const index = legendItem.datasetIndex;
+                            const chart = legend.chart;
+                            const meta = chart.getDatasetMeta(index);
+                            meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null;
+                            chart.update();
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         ticks: { maxRotation: 45, minRotation: 0 }
+                    },
+                    yImpressions: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Impressões',
+                            color: '#e91e8c'
+                        },
+                        ticks: {
+                            color: '#e91e8c'
+                        }
+                    },
+                    yInvestment: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Investimento (R$)',
+                            color: '#7b2cbf'
+                        },
+                        ticks: {
+                            color: '#7b2cbf'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
                     }
                 }
             }
         });
 
-        const rotuloCidades = Object.keys(metricas.cidades)
-            .sort((a, b) => metricas.cidades[b].impressions - metricas.cidades[a].impressions);
-        const impressoesCidades = rotuloCidades.map(c => metricas.cidades[c].impressions);
+        // Criar gráfico de Impressões Geográficas (inicia com cidades)
+        criarGraficoImpressoes(metricas, 'city');
 
-        graficos.cities = new Chart(document.getElementById('citiesChart'), {
-            type: 'bar',
-            data: {
-                labels: rotuloCidades,
-                datasets: [{
-                    label: 'Impressões',
-                    data: impressoesCidades,
-                    backgroundColor: colors.slice(0, rotuloCidades.length),
-                    borderColor: '#333',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } }
-            }
-        });
-
-        // Gráfico de Pizza - Distribuição por País
-        const rotuloPaises = Object.keys(metricas.paises);
-        const impressoesPaises = rotuloPaises.map(c => metricas.paises[c].impressions);
-
-        graficos.countries = new Chart(document.getElementById('countriesChart'), {
-            type: 'pie',
-            data: {
-                labels: rotuloPaises,
-                datasets: [{
-                    data: impressoesPaises,
-                    backgroundColor: colors.slice(0, rotuloPaises.length),
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { font: { size: 11 }, padding: 15 }
-                    }
-                }
-            }
-        });
-
-        // Gráfico de Pizza - Custo por Cidade
-        const custosCidades = rotuloCidades.map(c => metricas.cidades[c].cost);
-
-        graficos.citysCost = new Chart(document.getElementById('citysCostChart'), {
-            type: 'pie',
-            data: {
-                labels: rotuloCidades,
-                datasets: [{
-                    data: custosCidades,
-                    backgroundColor: colors.slice(0, rotuloCidades.length),
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { font: { size: 10 }, padding: 10 }
-                    }
-                }
-            }
-        });
-
-        // Gráfico de Pizza - Custo por País
-        const custosPaises = rotuloPaises.map(p => metricas.paises[p].cost);
-
-        graficos.cpp = new Chart(document.getElementById('cppChart'), {
-            type: 'pie',
-            data: {
-                labels: rotuloPaises,
-                datasets: [{
-                    data: custosPaises,
-                    backgroundColor: colors.slice(0, rotuloPaises.length),
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { font: { size: 10 }, padding: 10 }
-                    }
-                }
-            }
-        });
+        // Criar gráfico de Investimento Geográfico (inicia com cidades)
+        criarGraficoInvestimento(metricas, 'city');
 
     } catch (error) {
         console.error('Opa! Erro ao criar os gráficos:', error);
     }
 }
+
+// Função para criar gráfico de Impressões Geográficas
+function criarGraficoImpressoes(metricas, view) {
+    if (graficos.impressionsGeo) {
+        graficos.impressionsGeo.destroy();
+    }
+
+    const data = view === 'city' ?
+        Object.keys(metricas.cidades).sort((a, b) => metricas.cidades[b].impressions - metricas.cidades[a].impressions) :
+        Object.keys(metricas.paises).sort((a, b) => metricas.paises[b].impressions - metricas.paises[a].impressions);
+
+    const impressions = view === 'city' ?
+        data.map(c => metricas.cidades[c].impressions) :
+        data.map(p => metricas.paises[p].impressions);
+
+    // Cores suaves e harmônicas
+    const softColors = ['#a8d5e2', '#f9a8d4', '#b8e0d2', '#eac4d5', '#9fd3c7', '#ffd7ba', '#d4a5a5', '#b5ead7'];
+
+    graficos.impressionsGeo = new Chart(document.getElementById('impressionsGeoChart'), {
+        type: 'bar',
+        data: {
+            labels: data,
+            datasets: [{
+                label: 'Impressões',
+                data: impressions,
+                backgroundColor: softColors.slice(0, data.length),
+                borderColor: '#fff',
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return new Intl.NumberFormat('pt-BR').format(context.parsed.x) + ' impressões';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Função para criar gráfico de Investimento Geográfico (DONUT)
+function criarGraficoInvestimento(metricas, view) {
+    if (graficos.investmentGeo) {
+        graficos.investmentGeo.destroy();
+    }
+
+    const data = view === 'city' ?
+        Object.keys(metricas.cidades).sort((a, b) => metricas.cidades[b].cost - metricas.cidades[a].cost) :
+        Object.keys(metricas.paises).sort((a, b) => metricas.paises[b].cost - metricas.paises[a].cost);
+
+    const costs = view === 'city' ?
+        data.map(c => metricas.cidades[c].cost) :
+        data.map(p => metricas.paises[p].cost);
+
+    // Cores suaves e harmônicas para donut
+    const softColors = ['#a8d5e2', '#f9a8d4', '#b8e0d2', '#eac4d5', '#9fd3c7', '#ffd7ba', '#d4a5a5', '#b5ead7'];
+
+    graficos.investmentGeo = new Chart(document.getElementById('investmentGeoChart'), {
+        type: 'doughnut',
+        data: {
+            labels: data,
+            datasets: [{
+                label: 'Investimento (R$)',
+                data: costs,
+                backgroundColor: softColors.slice(0, data.length),
+                borderColor: '#fff',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return context.label + ': R$ ' + context.parsed.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Funções para alternar visualização
+function switchImpressionsView(view, btn) {
+    if (view === geoDataState.impressionsView || !geoDataState.metricas) return;
+
+    geoDataState.impressionsView = view;
+
+    // Atualizar botões
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Recriar gráfico
+    criarGraficoImpressoes(geoDataState.metricas, view);
+}
+
+function switchInvestmentView(view, btn) {
+    if (view === geoDataState.investmentView || !geoDataState.metricas) return;
+
+    geoDataState.investmentView = view;
+
+    // Atualizar botões
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Recriar gráfico
+    criarGraficoInvestimento(geoDataState.metricas, view);
+}
+
+// Event Listeners
+document.getElementById('campaignSelect').addEventListener('change', (e) => {
+    localStorage.setItem('selectedCampaignUuid', e.target.value);
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('content').style.display = 'none';
+    document.getElementById('error').style.display = 'none';
+    carregarDados();
+});
+
+document.getElementById('refreshBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = true;
+    btn.innerHTML = '⏳';
+
+    try {
+        const resp = await fetch(`${API_BASE}/api/update-manual`);
+        if (resp.ok) {
+            console.log("Sincronização manual acionada com sucesso.");
+            // Aguarda 2 segundos para o D1 processar e recarrega
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert("Erro ao acionar atualização manual.");
+            btn.disabled = false;
+            btn.innerHTML = '🔄';
+        }
+    } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.innerHTML = '🔄';
+    }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('selectedCampaignUuid');
+    window.location.href = 'login.html';
+});
 
 window.addEventListener('load', carregarDados);
