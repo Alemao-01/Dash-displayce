@@ -157,6 +157,13 @@ async function carregarDados() {
         // Atualizar timestamp
         document.getElementById('updateTime').textContent = new Date().toLocaleString('pt-BR');
 
+        // Atualizar informações da campanha no header
+        if (dadosAPI.campaign) {
+            const campaignInfo = document.getElementById('campaignInfo');
+            campaignInfo.textContent = `${dadosAPI.campaign.name} - ${dadosAPI.campaign.advertiser}`;
+            campaignInfo.classList.remove('hidden');
+        }
+
     } catch (error) {
         console.error('Erro:', error);
 

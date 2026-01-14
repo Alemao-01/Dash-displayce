@@ -21,6 +21,7 @@ export async function updateAllCampaigns(env) {
         // Normalização de campos
         const uuid = campaign.uuid || campaign["AgencyReport.campaignUuid"] || campaign.campaign_uuid;
         const name = campaign.name || campaign["AgencyReport.campaignName"] || campaign.campaign_name;
+
         // Validação de status
         let status = campaign.status;
         if (status === undefined) status = campaign["AgencyReport.deliveryStatus"];
@@ -32,15 +33,28 @@ export async function updateAllCampaigns(env) {
         if (status === 1 || status === true) {
             console.log(`🔄 Processando: ${name}`);
 
-            // Upsert Campanha
+            // Auto-associar com cliente baseado no advertiser_name
+            let clientId = null;
+            const client = await env.DB.prepare(
+                "SELECT id FROM clients WHERE advertiser_name = ?"
+            ).bind(advertiser).first();
+
+            if (client) {
+                clientId = client.id;
+                console.log(`  ✅ Auto-linkado ao cliente ID: ${clientId}`);
+            }
+
+            // Upsert Campanha (preserva custom_name e custom_advertiser se já existirem)
             await env.DB.prepare(`
-                INSERT INTO campaigns (uuid, name, status, advertiser_name)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO campaigns (uuid, name, advertiser_name, client_id, status)
+                VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(uuid) DO UPDATE SET 
-                    status=excluded.status,
-                    name=excluded.name,
-                    advertiser_name=excluded.advertiser_name
-            `).bind(uuid, name, 1, advertiser).run();
+                    name = excluded.name,
+                    advertiser_name = excluded.advertiser_name,
+                    client_id = COALESCE(excluded.client_id, campaigns.client_id),
+                    status = excluded.status,
+                    last_updated = CURRENT_TIMESTAMP
+            `).bind(uuid, name, advertiser, clientId, 'active').run();
 
             // Métricas
             await fetchAndSaveMetrics(env, token, uuid);

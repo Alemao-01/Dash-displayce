@@ -4,30 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Performance - Campanhas</title>
-
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-
-    <!-- Leaflet MarkerCluster CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
-
-    <!-- External Stylesheet -->
+    <title>Admin - E-Mídias Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-
-    <!-- Leaflet JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-
-    <!-- Leaflet MarkerCluster JS -->
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 </head>
 
 <body>
-    <!-- NAVBAR E-MÍDIAS -->
+    <!-- NAVBAR -->
     <nav class="navbar">
         <img src="assets/logo-horizontal.png" alt="E-Mídias" class="navbar-logo">
     </nav>
@@ -35,178 +17,101 @@
     <div class="container">
         <header>
             <div class="header-top">
-                <h1>📊 Dashboard de Performance</h1>
+                <h1>⚙️ Painel Administrativo</h1>
                 <button id="logoutBtn" class="btn-logout">Sair</button>
             </div>
-            <p>Análise de Campanhas - Impressões, Investimento e Geolocalização</p>
-
-            <div class="campaign-selector-container">
-                <label for="campaignSelect">Campanha:</label>
-                <select id="campaignSelect">
-                    <option value="">Carregando campanhas...</option>
-                </select>
-                <button id="refreshBtn" class="btn-refresh" title="Atualizar dados">🔄</button>
-            </div>
+            <p>Gerenciamento de campanhas, valores e clientes</p>
         </header>
 
-        <div id="loading" class="loading">Carregando dados...</div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="empty-state hidden">
-            <div class="empty-icon">📊</div>
-            <h2>Nenhum dado disponível</h2>
-            <p>Esta campanha ainda não possui dados de performance.</p>
-            <button class="btn-refresh-empty" data-action="refresh">🔄 Sincronizar Dados</button>
-        </div>
-
+        <div id="loading" class="loading">Carregando campanhas...</div>
         <div id="error" class="error hidden"></div>
 
-        <div id="content" class="hidden">
-            <!-- HERO STATS - NOVO LAYOUT -->
-            <div class="hero-stats">
-                <h2 class="hero-title">Dashboard de Performance - Campanha Atual</h2>
-                <div class="hero-metrics">
-                    <div class="hero-stat">
-                        <div class="hero-icon">💰</div>
-                        <div class="hero-info">
-                            <span class="hero-value" id="heroCost">R$ 0,00</span>
-                            <span class="hero-label">Investimento Total</span>
-                        </div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-icon">📊</div>
-                        <div class="hero-info">
-                            <span class="hero-value" id="heroImpressions">0</span>
-                            <span class="hero-label">Impressões Totais</span>
-                        </div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-icon">📺</div>
-                        <div class="hero-info">
-                            <span class="hero-value" id="heroScreens">0</span>
-                            <span class="hero-label">Telas Ativas</span>
-                        </div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-icon">▶️</div>
-                        <div class="hero-info">
-                            <span class="hero-value" id="heroPlays">0</span>
-                            <span class="hero-label">Total de Exibições</span>
-                        </div>
-                    </div>
+        <!-- TABELA DE CAMPANHAS -->
+        <div id="campaignsTable" class="hidden">
+            <div class="admin-header">
+                <h2>📊 Todas as Campanhas</h2>
+                <div class="admin-actions">
+                    <input type="text" id="searchInput" placeholder="🔍 Buscar campanha..." class="search-input">
+                    <button id="refreshBtn" class="btn-refresh">🔄 Atualizar</button>
                 </div>
             </div>
 
-            <!-- Métricas Principais -->
-            <div class="metrics-grid">
-                <div class="metric-card cost">
-                    <div class="metric-label">💰 Investimento Total</div>
-                    <div class="metric-value" id="totalCost">R$ 0.00</div>
-                    <div class="metric-subtext">Custo líquido de campanhas</div>
-                </div>
-                <div class="metric-card impressions">
-                    <div class="metric-label">👁️ Impressões Totais</div>
-                    <div class="metric-value" id="totalImpressions">0</div>
-                    <div class="metric-subtext">Visualizações em telas</div>
-                </div>
-                <div class="metric-card plays">
-                    <div class="metric-label">▶️ Total de Plays</div>
-                    <div class="metric-value" id="totalPlays">0</div>
-                    <div class="metric-subtext">Exibições totais</div>
-                </div>
-                <div class="metric-card screens">
-                    <div class="metric-label">🖥️ Telas Ativas</div>
-                    <div class="metric-value" id="totalScreens">0</div>
-                    <div class="metric-subtext">Pontos de exibição únicos</div>
-                </div>
-                <div class="metric-card cities">
-                    <div class="metric-label">🏙️ Cidades</div>
-                    <div class="metric-value" id="totalCities">0</div>
-                    <div class="metric-subtext">Cidades no plano</div>
-                </div>
-                <div class="metric-card countries">
-                    <div class="metric-label">🌍 Países</div>
-                    <div class="metric-value" id="totalCountries">0</div>
-                    <div class="metric-subtext">Países no plano</div>
-                </div>
-            </div>
-
-            <!-- Gráficos -->
-            <div class="charts-grid">
-                <!-- Mapa de Localizações -->
-                <div class="map-container full-width">
-                    <h2>🗺️ Mapa de Telas - Geolocalização</h2>
-                    <div id="map"></div>
-                    <div class="geo-stats">
-                        <div class="geo-stat">
-                            <div class="geo-stat-label">Cidades Cobertas</div>
-                            <div class="geo-stat-value" id="mapCities">-</div>
-                        </div>
-                        <div class="geo-stat">
-                            <div class="geo-stat-label">Países Cobertos</div>
-                            <div class="geo-stat-value" id="mapCountries">-</div>
-                        </div>
-                        <div class="geo-stat">
-                            <div class="geo-stat-label">Impressões Médias por Tela</div>
-                            <div class="geo-stat-value" id="avgImpressions">-</div>
-                        </div>
-                        <div class="geo-stat">
-                            <div class="geo-stat-label">Custo Médio por Tela</div>
-                            <div class="geo-stat-value" id="avgCost">-</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gráfico Unificado - Impressões e Investimento -->
-                <div class="chart-card full-width">
-                    <h2>📈 Performance Diária - Impressões e Investimento</h2>
-                    <div class="chart-container">
-                        <canvas id="dailyUnifiedChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Gráfico Impressões por Cidade/País -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h2>📊 Impressões Geográficas</h2>
-                        <div class="chart-toggles">
-                            <button class="toggle-btn active" data-chart="impressions" data-view="city">Por
-                                Cidade</button>
-                            <button class="toggle-btn" data-chart="impressions" data-view="country">Por País</button>
-                        </div>
-                    </div>
-                    <div class="chart-container small">
-                        <canvas id="impressionsGeoChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Gráfico Investimento por Cidade/País -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h2>💰 Investimento Geográfico</h2>
-                        <div class="chart-toggles">
-                            <button class="toggle-btn active" data-chart="investment" data-view="city">Por
-                                Cidade</button>
-                            <button class="toggle-btn" data-chart="investment" data-view="country">Por País</button>
-                        </div>
-                    </div>
-                    <div class="chart-container small">
-                        <canvas id="investmentGeoChart"></canvas>
-                    </div>
-                </div>
+            <div class="table-container">
+                <table class="campaigns-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Cliente</th>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th>Custo Real</th>
+                            <th>Valor Cliente</th>
+                            <th>Impressões</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
             </div>
         </div>
-
-        <footer>
-            <div class="footer-brand">
-                <img src="assets/logo-horizontal.png" alt="E-Mídias" class="footer-logo">
-            </div>
-            <p>Dashboard E-Mídias • Tecnologia em publicidade</p>
-            <p class="update-time-text">Atualizado em: <span id="updateTime"></span></p>
-        </footer>
     </div>
 
-    <script src="script.js"></script>
+    <!-- MODAL DE EDIÇÃO -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Editar Campanha</h2>
+                <button class="modal-close" id="modalCloseBtn">×</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nome da Campanha:</label>
+                    <input type="text" id="modalCampaignName" class="form-input" readonly>
+                    <small>Nome original da API: <span id="modalOriginalName"></span></small>
+                </div>
+
+                <div class="form-group">
+                    <label>Cliente/Anunciante:</label>
+                    <input type="text" id="modalAdvertiser" class="form-input" readonly>
+                    <small>Anunciante original: <span id="modalOriginalAdvertiser"></span></small>
+                </div>
+
+                <hr class="separator">
+
+                <div class="form-group">
+                    <label>Custo Real (DisplayCE):</label>
+                    <div class="value-display">R$ <span id="modalRealCost">0,00</span></div>
+                    <small class="helper-text">Este é o valor que você pagou para a DisplayCE</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="modalCustomCost">Valor para o Cliente: *</label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">R$</span>
+                        <input type="number" id="modalCustomCost" class="form-input" placeholder="0.00" step="0.01"
+                            min="0" required>
+                    </div>
+                    <small class="helper-text">Digite o valor que você cobra do cliente</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="modalNotes">Observações (opcional):</label>
+                    <textarea id="modalNotes" class="form-textarea" rows="3"
+                        placeholder="Ex: Valor negociado em reunião..."></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" id="modalCancelBtn">Cancelar</button>
+                <button id="saveBtn" class="btn-primary">💾 Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
 </body>
 
 </html>
