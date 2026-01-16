@@ -111,8 +111,8 @@ function renderTable(campaigns, user) {
 
         return `
             <tr>
-                <td><strong>${c.name || c.advertiser_name || 'Sem nome'}</strong></td>
-                <td>${c.client_name || c.advertiser || '-'}</td>
+                <td><strong>${c.custom_name || c.original_name || 'Sem nome'}</strong></td>
+                <td>${c.custom_advertiser || c.original_advertiser || c.client_name || '-'}</td>
                 <td>${formatDate(c.start_date)}</td>
                 <td>${formatDate(c.end_date) || 'Em andamento'}</td>
                 ${isAdmin ? `<td>${formatCurrency(realCost)}</td>` : ''}
@@ -138,11 +138,14 @@ function openEditModal(uuid) {
     currentCampaign = campaign;
 
     // Preencher modal
-    document.getElementById('modalCampaignName').value = campaign.name || '';
-    document.getElementById('modalOriginalName').textContent = campaign.name || '';
-    document.getElementById('modalAdvertiser').value = campaign.advertiser || '';
-    document.getElementById('modalOriginalAdvertiser').textContent = campaign.advertiser || '';
-    document.getElementById('modalRealCost').textContent = formatCurrency(campaign.real_cost || 0).replace('R$ ', '');
+    document.getElementById('modalCampaignName').value = campaign.custom_name || '';
+    document.getElementById('modalOriginalName').textContent = campaign.original_name || '';
+    document.getElementById('modalAdvertiser').value = campaign.custom_advertiser || '';
+    document.getElementById('modalOriginalAdvertiser').textContent = campaign.original_advertiser || '';
+
+    // Corrigir bug visual R$ R$ removendo prefixo 'R$' e espaços extras
+    const realCostFormatted = formatCurrency(campaign.real_cost || 0).replace(/^R\$\s*/, '');
+    document.getElementById('modalRealCost').textContent = realCostFormatted;
     document.getElementById('modalCustomCost').value = campaign.custom_cost || '';
     document.getElementById('modalNotes').value = campaign.notes || '';
 
@@ -159,15 +162,19 @@ function closeModal() {
 async function saveOverride() {
     if (!currentCampaign) return;
 
-    const customCost = parseFloat(document.getElementById('modalCustomCost').value);
+    const customName = document.getElementById('modalCampaignName').value;
+    const customAdvertiser = document.getElementById('modalAdvertiser').value;
+    const customCostInput = document.getElementById('modalCustomCost').value;
+    const customCost = customCostInput ? parseFloat(customCostInput) : null;
     const notes = document.getElementById('modalNotes').value;
 
-    if (!customCost || customCost <= 0) {
-        alert('Por favor, insira um valor válido');
+    // Validação: se preencheu custo, tem que ser válido
+    if (customCostInput && (isNaN(customCost) || customCost < 0)) {
+        alert('Valor inválido. Digite um número positivo ou deixe em branco.');
         return;
     }
 
-    const token = await checkAuth();
+    const { token } = await checkAuth();
     saveBtn.disabled = true;
     saveBtn.textContent = '💾 Salvando...';
 
@@ -178,7 +185,12 @@ async function saveOverride() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ custom_cost: customCost, notes })
+            body: JSON.stringify({
+                custom_cost: customCost,
+                notes: notes,
+                custom_name: customName,
+                custom_advertiser: customAdvertiser
+            })
         });
 
         if (!response.ok) {

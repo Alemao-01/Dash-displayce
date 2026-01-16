@@ -160,7 +160,10 @@ async function carregarDados() {
         // Atualizar informações da campanha no header
         if (dadosAPI.campaign) {
             const campaignInfo = document.getElementById('campaignInfo');
-            campaignInfo.textContent = `${dadosAPI.campaign.name} - ${dadosAPI.campaign.advertiser}`;
+            // Usar valores customizados se existirem (editados pelo admin)
+            const campaignName = dadosAPI.campaign.custom_name || dadosAPI.campaign.name;
+            const advertiser = dadosAPI.campaign.custom_advertiser || dadosAPI.campaign.advertiser;
+            campaignInfo.textContent = `${campaignName} - ${advertiser}`;
             campaignInfo.classList.remove('hidden');
         }
 

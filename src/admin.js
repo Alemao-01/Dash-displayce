@@ -34,8 +34,10 @@ export async function listAllCampaigns(env, user) {
     const { results } = await env.DB.prepare(`
         SELECT 
             c.uuid,
-            COALESCE(c.custom_name, c.name) as name,
-            COALESCE(c.custom_advertiser, c.advertiser_name) as advertiser,
+            c.name as original_name,
+            c.custom_name,
+            c.advertiser_name as original_advertiser,
+            c.custom_advertiser,
             c.start_date,
             c.end_date,
             c.status,
@@ -56,23 +58,45 @@ export async function listAllCampaigns(env, user) {
 /**
  * Criar/editar override de valor
  */
-export async function saveCampaignOverride(env, user, campaignUuid, customCost, notes) {
+/**
+ * Salvar/Atualizar campanha completa (Override + Nomes)
+ */
+export async function saveCampaignOverride(env, user, campaignUuid, data) {
     if (!isAdmin(user)) {
         return { error: "Permissão negada", status: 403 };
     }
 
-    await env.DB.prepare(`
-        INSERT INTO campaign_overrides (campaign_uuid, custom_cost, notes, updated_by)
-        VALUES (?, ?, ?, ?)
-        ON CONFLICT(campaign_uuid) DO UPDATE SET
-            custom_cost = excluded.custom_cost,
-            notes = excluded.notes,
-            updated_by = excluded.updated_by,
-            updated_at = CURRENT_TIMESTAMP
-    `).bind(campaignUuid, customCost, notes || null, user.id).run();
+    const { custom_cost, notes, custom_name, custom_advertiser } = data;
 
-    return { success: true, status: 200 };
+    try {
+        // 1. Salvar Overrides (Custo e Notas)
+        await env.DB.prepare(`
+            INSERT INTO campaign_overrides (campaign_uuid, custom_cost, notes, updated_by)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(campaign_uuid) DO UPDATE SET
+                custom_cost = excluded.custom_cost,
+                notes = excluded.notes,
+                updated_by = excluded.updated_by,
+                updated_at = CURRENT_TIMESTAMP
+        `).bind(campaignUuid, custom_cost || null, notes || null, user?.id || 1).run();
+
+        // 2. Salvar Nomes Customizados (Na tabela campaigns)
+        // Só atualiza se foram passados (mesmo que seja string vazia, para limpar)
+        if (custom_name !== undefined || custom_advertiser !== undefined) {
+            await env.DB.prepare(`
+                UPDATE campaigns
+                SET custom_name = ?, custom_advertiser = ?
+                WHERE uuid = ?
+            `).bind(custom_name || null, custom_advertiser || null, campaignUuid).run();
+        }
+
+        return { success: true, status: 200 };
+    } catch (error) {
+        console.error('Erro ao salvar override:', error);
+        return { error: `Erro no banco: ${error.message}`, status: 500 };
+    }
 }
+
 
 /**
  * Atualizar nome customizado da campanha
@@ -199,12 +223,12 @@ export async function handleAdminRoutes(url, request, env, corsHeaders) {
         });
     }
 
-    // Salvar override de valor
+    // Salvar override de valor e nomes
     if (path.match(/^\/api\/admin\/campaigns\/[^/]+\/override$/) && method === 'POST') {
         const campaignUuid = path.split('/')[4];
-        const { custom_cost, notes } = await request.json();
+        const data = await request.json(); // Pegar todo o objeto
 
-        const result = await saveCampaignOverride(env, user, campaignUuid, custom_cost, notes);
+        const result = await saveCampaignOverride(env, user, campaignUuid, data);
         return new Response(JSON.stringify(result.error || { success: true }), {
             status: result.status,
             headers: { 'Content-Type': 'application/json', ...corsHeaders }
